@@ -1,16 +1,99 @@
-export const App = () => {
-  return (
-    <div
-      style={{
-        height: '100vh',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        fontSize: 40,
-        color: '#010101'
-      }}
-    >
-      React homework template
-    </div>
-  );
-};
+import { Component } from 'react';
+import { ContactForm } from './ContactForm/ContactForm';
+import { ContactList } from './ContactList/ContactList';
+import { Filter } from './Filter/Filter';
+import { Div, H2 } from './StyledApp.styled';
+
+export class App extends Component {
+  state = {
+    //визначаю два поля масив і рядок
+    contacts: [
+      { id: 'id-1', name: 'Rosie Simpson', number: '459-12-56' },
+      { id: 'id-2', name: 'Hermione Kline', number: '443-89-12' },
+      { id: 'id-3', name: 'Eden Clements', number: '645-17-79' },
+      { id: 'id-4', name: 'Annie Copeland', number: '227-91-26' },
+    ],
+    filter: '', //пошук контактів за іменем
+  };
+
+  //перевіряю збереженні контакти у локальному сховищу
+  componentDidMount() {
+    const savedContacts = localStorage.getItem('contacts');
+
+    if (savedContacts) {
+      this.setState({ contacts: JSON.parse(savedContacts) });
+    }
+  }
+
+  filterChange = e => {
+    //цей метод викликається при зміні значення фільтру і оновлюється коли користувач вводе значення
+    this.setState({ filter: e.target.value });
+  };
+
+  visibleContacts = () => {
+    const { filter, contacts } = this.state;
+    const normalizedFilter = filter.toLowerCase();
+
+    //повертаємо відфільтрований масив
+    return contacts.filter(contact =>
+      contact.name.toLowerCase().includes(normalizedFilter)
+    );
+  };
+
+  addContact = newContact => {
+    const existingContact = this.state.contacts.find(
+      //шукаю існуючий контакт до першого збігу
+      contact => contact.id === newContact.id
+    );
+
+    if (existingContact) {
+      alert(`${newContact.name} ${newContact.number} is already in contacts`);
+      return;
+    }
+
+    this.setState(
+      //оновлюю контакти та додаю новий
+      prevState => ({
+        contacts: [newContact, ...prevState.contacts],
+      }),
+      () => {
+        localStorage.setItem('contacts', JSON.stringify(this.state.contacts)); //зчитую і зберігаю новий контакт у стейт
+      }
+    );
+  };
+
+  deleteContacts = id => {
+    this.setState(
+      prevState => ({
+        //оновлюю та видаляю по id
+        contacts: prevState.contacts.filter(contact => contact.id !== id),
+      }),
+      () => {
+        localStorage.setItem('contacts', JSON.stringify(this.state.contacts)); //зчитую і додаю до стейта
+      }
+    );
+  };
+
+  render() {
+    const { contacts, filter } = this.state;
+    const visibleFilter = this.visibleContacts();
+
+    return (
+      // функція onSubmitData передається як властивість для додавання нового контакту
+      <Div>
+        <ContactForm onSubmitData={this.addContact} />
+
+        <H2>Contacts {contacts.length}</H2>
+        <Filter value={filter} onChange={this.filterChange} />
+        {contacts.length ? (
+          <ContactList
+            contacts={visibleFilter}
+            onDeletContacts={this.deleteContacts}
+          />
+        ) : (
+          <p>No contacts in phonebook</p>
+        )}
+      </Div>
+    );
+  }
+}
