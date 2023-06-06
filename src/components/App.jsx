@@ -16,7 +16,7 @@ export class App extends Component {
     filter: '', //пошук контактів за іменем
   };
 
-  //перевіряю збереженні контакти у локальному сховищу
+  //зчитую контакти у локальному сховищу
   componentDidMount() {
     const savedContacts = localStorage.getItem('contacts');
 
@@ -24,6 +24,13 @@ export class App extends Component {
       this.setState({ contacts: JSON.parse(savedContacts) });
     }
   }
+
+componentDidUpdate(_, prevState) {
+  const { contacts } = this.state;
+  if ( prevState.contacts !== contacts ) {
+    localStorage.setItem('contacts', JSON.stringify(contacts)); 
+  }
+}
 
   filterChange = e => {
     //цей метод викликається при зміні значення фільтру і оновлюється коли користувач вводе значення
@@ -43,7 +50,9 @@ export class App extends Component {
   addContact = newContact => {
     const existingContact = this.state.contacts.find(
       //шукаю існуючий контакт до першого збігу
-      contact => contact.id === newContact.id
+      contact => contact.name.toLowerCase() === newContact.name.toLowerCase() ||
+      contact.number === newContact.number 
+  
     );
 
     if (existingContact) {
@@ -56,9 +65,7 @@ export class App extends Component {
       prevState => ({
         contacts: [newContact, ...prevState.contacts],
       }),
-      () => {
-        localStorage.setItem('contacts', JSON.stringify(this.state.contacts)); //зчитую і зберігаю новий контакт у стейт
-      }
+      
     );
   };
 
@@ -68,9 +75,7 @@ export class App extends Component {
         //оновлюю та видаляю по id
         contacts: prevState.contacts.filter(contact => contact.id !== id),
       }),
-      () => {
-        localStorage.setItem('contacts', JSON.stringify(this.state.contacts)); //зчитую і додаю до стейта
-      }
+      
     );
   };
 
